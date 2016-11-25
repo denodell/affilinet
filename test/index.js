@@ -6,8 +6,8 @@ describe(`Affilinet`, it => {
 
 	beforeEach(() => {
 		A = new Affilinet({
-			publisherId: '-',
-			publisherPassword: '-',
+			publisherId: '',
+			publisherPassword: '',
 		})
 	})
 
@@ -19,5 +19,10 @@ describe(`Affilinet`, it => {
 	it(`Get Merchants`, async expect => {
 		let merchants = await A.getMerchants()
 		expect.true(Array.isArray(merchants))
+	})
+
+	it(`Get Transactions`, async expect => {
+		let transactions = await A.getTransactions()
+		expect.true(Array.isArray(transactions))
 	})
 })
