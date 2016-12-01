@@ -64,8 +64,12 @@ export default class Affilinet {
 	}
 
 	getTransactions() {
+		function padZero(num) {
+			return num < 10 ? ('0' + num) : num
+		}
+
 		const endDateObj = new Date()
-		const endDate = `${endDateObj.getFullYear()}-${endDateObj.getMonth() + 1}-${endDateObj.getDate()}`
+		const endDate = `${endDateObj.getFullYear()}-${padZero(endDateObj.getMonth() + 1)}-${padZero(endDateObj.getDate())}`
 		const startDate = `2000-01-01`
 
 		return this.getPublisherCredentialToken().then(CredentialToken => {
