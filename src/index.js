@@ -88,7 +88,10 @@ export default class Affilinet {
 				}).then((response = {}) => {
 					const { TransactionCollection = {} } = response
 					const { Transaction = [] } = TransactionCollection || {}
-					return Transaction
+					return Transaction.map(transaction => Object.assign({}, transaction, {
+						NetPrice: +transaction.NetPrice,
+						PublisherCommission: +transaction.PublisherCommission,
+					}))
 				})
 			})
 		})
