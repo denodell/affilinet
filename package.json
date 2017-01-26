@@ -1,6 +1,6 @@
 {
   "name": "affilinet-api",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Affilinet API Helper Methods For Node / JavaScript",
   "author": {
     "name": "Den Odell",
@@ -16,7 +16,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
-    "compile": "babel --presets es2015,stage-0 -d dist/ src/",
+    "compile": "babel --plugins transform-runtime --presets es2015,stage-0 -d dist/ src/",
     "prepublish": "npm run compile",
     "start": "node dist/index.js",
     "test": "npm run compile && ava"
@@ -47,8 +47,9 @@
   "devDependencies": {
     "ava": "^0.15.2",
     "ava-spec": "^1.0.1",
-    "sinon": "^1.17.4",
     "babel-eslint": "^6.1.2",
-    "eslint": "^3.1.1"
+    "babel-plugin-transform-runtime": "^6.22.0",
+    "eslint": "^3.1.1",
+    "sinon": "^1.17.4"
   }
 }

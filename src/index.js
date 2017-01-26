@@ -4,6 +4,7 @@ import soap from 'soap-as-promised'
 
 const PUBLISHER_LOGIN_SERVICE_URL = `https://api.affili.net/V2.0/Logon.svc?wsdl`
 const PUBLISHER_PROGRAM_SERVICE_URL = `https://api.affili.net/V2.0/PublisherProgram.svc?wsdl`
+const PUBLISHER_VOUCHER_SERVICE_URL = `https://api.affili.net/V2.0/PublisherInbox.svc?wsdl`
 const PUBLISHER_TRANSACTION_SERVICE_URL = `https://api.affili.net/V2.0/PublisherStatistics.svc?wsdl`
 
 export default class Affilinet {
@@ -22,7 +23,8 @@ export default class Affilinet {
 	}
 
 	getPublisherCredentialToken() {
-		return soap.createClient(PUBLISHER_LOGIN_SERVICE_URL).then(client => {
+		return (async () => {
+			const client = await soap.createClient(PUBLISHER_LOGIN_SERVICE_URL)
 			return new Promise((resolve, reject) => {
 				client.Logon({
 	 				'q2:Username': this.config.publisherId,
@@ -37,30 +39,49 @@ export default class Affilinet {
 					resolve(result)
 	 			})
 			})
-		})
+		})()
 	}
 
 	getMerchants() {
-		return this.getPublisherCredentialToken().then(CredentialToken => {
-			return soap.createClient(PUBLISHER_PROGRAM_SERVICE_URL).then(client => {
-				return client.GetPrograms({
-					'CredentialToken': CredentialToken,
-					'DisplaySettings': {
-						'CurrentPage': 1,
-						'PageSize': 100,
-					},
-					'GetProgramsQuery': {
-						'PartnershipStatus': [{
-							'ProgramPartnershipStatusEnum': 'Active',
-						}],
-					},
-				}).then((response = {}) => {
-					const { ProgramCollection = {} } = response
-					const { Program = [] } = ProgramCollection
-					return Program
-				})
+		return (async () => {
+			const CredentialToken = await this.getPublisherCredentialToken()
+			const client = await soap.createClient(PUBLISHER_PROGRAM_SERVICE_URL)
+			const response = await client.GetPrograms({
+				'CredentialToken': CredentialToken,
+				'DisplaySettings': {
+					'CurrentPage': 1,
+					'PageSize': 100,
+				},
+				'GetProgramsQuery': {
+					'PartnershipStatus': [{
+						'ProgramPartnershipStatusEnum': 'Active',
+					}],
+				},
 			})
-		})
+			const { ProgramCollection = {} } = response || {}
+			const { Program = [] } = ProgramCollection
+			return Program
+		})()
+	}
+
+	getVouchers() {
+		return (async () => {
+			const CredentialToken = await this.getPublisherCredentialToken()
+			const client = await soap.createClient(PUBLISHER_VOUCHER_SERVICE_URL)
+			const response = await client.SearchVoucherCodes({
+				'CredentialToken': CredentialToken,
+				'DisplaySettings': {
+					'CurrentPage': 1,
+					'PageSize': 1000,
+				},
+				'SearchVoucherCodesRequestMessage': {
+					'ProgramPartnershipStatus': 'Accepted',
+				},
+			})
+			const { VoucherCodeCollection = {} } = response || {}
+			const { VoucherCodeItem = [] } = VoucherCodeCollection || {}
+			return VoucherCodeItem
+		})()
 	}
 
 	getTransactions() {
@@ -72,28 +93,27 @@ export default class Affilinet {
 		const endDate = `${endDateObj.getFullYear()}-${padZero(endDateObj.getMonth() + 1)}-${padZero(endDateObj.getDate())}`
 		const startDate = `2000-01-01`
 
-		return this.getPublisherCredentialToken().then(CredentialToken => {
-			return soap.createClient(PUBLISHER_TRANSACTION_SERVICE_URL).then(client => {
-				return client.GetTransactions({
-					'CredentialToken': CredentialToken,
-					'PageSettings': {
-						'CurrentPage': 1,
-						'PageSize': 100,
-					},
-					'TransactionQuery': {
-						'EndDate': endDate,
-						'StartDate': startDate,
-						'TransactionStatus': `All`,
-					},
-				}).then((response = {}) => {
-					const { TransactionCollection = {} } = response
-					const { Transaction = [] } = TransactionCollection || {}
-					return Transaction.map(transaction => Object.assign({}, transaction, {
-						NetPrice: +transaction.NetPrice,
-						PublisherCommission: +transaction.PublisherCommission,
-					}))
-				})
+		return (async () => {
+			const CredentialToken = await this.getPublisherCredentialToken()
+			const client = await soap.createClient(PUBLISHER_TRANSACTION_SERVICE_URL)
+			const response = await client.GetTransactions({
+				'CredentialToken': CredentialToken,
+				'PageSettings': {
+					'CurrentPage': 1,
+					'PageSize': 100,
+				},
+				'TransactionQuery': {
+					'EndDate': endDate,
+					'StartDate': startDate,
+					'TransactionStatus': `All`,
+				},
 			})
-		})
+			const { TransactionCollection = {} } = response || {}
+			const { Transaction = [] } = TransactionCollection || {}
+			return Transaction.map(transaction => Object.assign({}, transaction, {
+				NetPrice: +transaction.NetPrice,
+				PublisherCommission: +transaction.PublisherCommission,
+			}))
+		})()
 	}
 }
